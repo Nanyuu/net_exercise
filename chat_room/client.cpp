@@ -12,6 +12,7 @@
 #include<unistd.h>
 #include<poll.h>
 #include <cstring>
+#include <fcntl.h>
 
 #define BUFFER_SIZE 64
 using namespace std;
@@ -75,14 +76,17 @@ int main(int argc, char* argv[])
         {
             memset(read_buf, '\0', BUFFER_SIZE);
             recv(fds[1].fd, read_buf, BUFFER_SIZE-1,0);
-            fmt::print("{} \n", read_buf)
+            fmt::print("{} \n", read_buf);
         }
 
-
+        if(fds[0].revents & POLLIN)
+        {
+            /* zero copy using splice */
+            ret = splice(0, NULL, pipefd[1],NULL,32768, SPLICE_F_MORE | SPLICE_F_MOVE);
+            ret = splice(pipefd[0], NULL, sockfd, NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE);
+        }
     }
-
-
-
-
+    close(sockfd);
+    return 0;
 }
 
